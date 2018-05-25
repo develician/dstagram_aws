@@ -12,9 +12,47 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import dj_database_url
+import json
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+# Env for dev / deploy
+def get_env(setting, envs):
+    try:
+        return envs[setting]
+    except KeyError:
+        error_msg = "You SHOULD set {} environ".format(setting)
+        raise ImproperlyConfigured(error_msg)
+
+
+DEV_ENVS = os.path.join(BASE_DIR, "envs_dev.json")
+DEPLOY_ENVS = os.path.join(BASE_DIR, "envs.json")
+
+if os.path.exists(DEV_ENVS):  # Develop Env
+    env_file = open(DEV_ENVS)
+elif os.path.exists(DEPLOY_ENVS):  # Deploy Env
+    env_file = open(DEPLOY_ENVS)
+else:
+    env_file = None
+
+if env_file is None:  # System environ
+    try:
+        FACEBOOK_KEY = os.environ['FACEBOOK_KEY']
+        FACEBOOK_SECRET = os.environ['FACEBOOK_SECRET_KEY']
+        # GOOGLE_KEY = os.environ['GOOGLE_KEY']
+        # GOOGLE_SECRET = os.environ['GOOGLE_SECRET']
+    except KeyError as error_msg:
+        raise ImproperlyConfigured(error_msg)
+else:  # JSON env
+    envs = json.loads(env_file.read())
+    FACEBOOK_KEY = get_env('FACEBOOK_KEY', envs)
+    FACEBOOK_SECRET = get_env('FACEBOOK_SECRET', envs)
+    # GOOGLE_KEY = get_env('GOOGLE_KEY', envs)
+    # GOOGLE_SECRET = get_env('GOOGLE_SECRET', envs)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -23,7 +61,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '&tqunebr5_oj4b*+a^pn%s!s!@-u962l!ki0ly+6_(7=h-!ny4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -38,6 +76,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Photo.apps.PhotoConfig',
     'Account',
+    'social_django',
 ]
 
 MIDDLEWARE = [
@@ -101,6 +140,22 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'social_core.backends.google.GoogleOAuth2',  # Google
+    'social_core.backends.facebook.FacebookOAuth2',  # Facebook
+    'django.contrib.auth.backends.ModelBackend',  # Django 기본 유저모델
+]
+
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
+
+# SocialLogin: Facebook
+SOCIAL_AUTH_FACEBOOK_KEY = FACEBOOK_KEY
+SOCIAL_AUTH_FACEBOOK_SECRET = FACEBOOK_SECRET
+SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
+SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
+  'fields': 'id, name, email'
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -124,3 +179,4 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 LOGIN_REDIRECT_URL = '/photo/'
+

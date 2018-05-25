@@ -9,4 +9,5 @@
         {% csrf_token %}
         <input class="btn btn-primary" type="submit" value="Login"/>
     </form>
+    <a href="{% url "social:begin" "facebook" %}" class="btn btn-primary">Facebook Login</a>
 {% endblock %}
