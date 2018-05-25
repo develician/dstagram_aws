@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+{% block content %}
+    <div class="alert alert-info">Please enter your account informations.</div>
+
+    <form method="POST" action=".">
+        {{ form.as_p }}
+        {% csrf_token %}
+        <input type="submit" class="btn btn-primary" value="가입하기"/>
+    </form>
+{% endblock %}
